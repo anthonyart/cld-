@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>cld-</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #0d0d0d;
+      color: #e0e0e0;
+      font-family: monospace;
+      font-size: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <span id="clock"></span>
+  <script>
+    function tick() {
+      document.getElementById('clock').textContent = new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }) + ' — ' + new Date().toLocaleDateString([], {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit'
+      });
+    }
+    tick();
+    setInterval(tick, 1000);
+  </script>
+</body>
+</html>

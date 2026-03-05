@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLAUDE.md Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+–bg: #0e0e0e;
+–surface: #161616;
+–border: #2a2a2a;
+–border-bright: #3d3d3d;
+–text: #e8e8e8;
+–muted: #6b6b6b;
+–accent: #c8f060;
+–accent-dim: #8aaa2a;
+–on-accent: #0e0e0e;
+–tag-bg: #1f1f1f;
+–active-block: #1a1f0e;
+–active-border: #c8f060;
+}
+
+body {
+background: var(–bg);
+color: var(–text);
+font-family: ‘DM Sans’, sans-serif;
+font-size: 14px;
+line-height: 1.6;
+min-height: 100vh;
+}
+
+/* HEADER */
+header {
+border-bottom: 1px solid var(–border);
+padding: 20px 32px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+position: sticky;
+top: 0;
+background: var(–bg);
+z-index: 100;
+}
+
+.logo {
+display: flex;
+align-items: baseline;
+gap: 10px;
+}
+
+.logo-text {
+font-family: ‘DM Mono’, monospace;
+font-size: 15px;
+color: var(–accent);
+letter-spacing: -0.02em;
+}
+
+.logo-sub {
+font-family: ‘Instrument Serif’, serif;
+font-style: italic;
+color: var(–muted);
+font-size: 13px;
+}
+
+.header-actions {
+display: flex;
+gap: 10px;
+align-items: center;
+}
+
+.btn {
+padding: 8px 16px;
+border-radius: 6px;
+border: 1px solid var(–border-bright);
+background: transparent;
+color: var(–text);
+font-family: ‘DM Mono’, monospace;
+font-size: 12px;
+cursor: pointer;
+transition: all 0.15s;
+letter-spacing: 0.02em;
+}
+
+.btn:hover { border-color: var(–accent); color: var(–accent); }
+
+.btn-primary {
+background: var(–accent);
+color: var(–on-accent);
+border-color: var(–accent);
+font-weight: 500;
+}
+
+.btn-primary:hover { background: #d9f570; color: var(–on-accent); border-color: #d9f570; }
+
+/* LAYOUT */
+.layout {
+display: grid;
+grid-template-columns: 280px 1fr 1fr;
+height: calc(100vh - 61px);
+}
+
+/* LEFT PANEL - Block selector */
+.panel-left {
+border-right: 1px solid var(–border);
+overflow-y: auto;
+padding: 20px 16px;
+}
+
+.panel-label {
+font-family: ‘DM Mono’, monospace;
+font-size: 10px;
+color: var(–muted);
+letter-spacing: 0.12em;
+text-transform: uppercase;
+padding: 0 8px;
+margin-bottom: 12px;
+}
+
+.block-item {
+display: flex;
+align-items: center;
+gap: 10px;
+padding: 9px 10px;
+border-radius: 7px;
+cursor: pointer;
+border: 1px solid transparent;
+margin-bottom: 3px;
+transition: all 0.12s;
+user-select: none;
+}
+
+.block-item:hover { background: var(–surface); border-color: var(–border); }
+
+.block-item.active {
+background: var(–active-block);
+border-color: var(–active-border);
+}
+
+.block-toggle {
+width: 16px;
+height: 16px;
+border-radius: 4px;
+border: 1px solid var(–border-bright);
+background: transparent;
+display: flex;
+align-items: center;
+justify-content: center;
+flex-shrink: 0;
+transition: all 0.12s;
+}
+
+.block-item.active .block-toggle {
+background: var(–accent);
+border-color: var(–accent);
+}
+
+.block-toggle svg { display: none; }
+.block-item.active .block-toggle svg { display: block; }
+
+.block-info { flex: 1; min-width: 0; }
+
+.block-name {
+font-family: ‘DM Mono’, monospace;
+font-size: 11px;
+color: var(–text);
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+
+.block-item.active .block-name { color: var(–accent); }
+
+.block-desc {
+font-size: 11px;
+color: var(–muted);
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+margin-top: 1px;
+}
+
+.section-divider {
+font-family: ‘DM Mono’, monospace;
+font-size: 9px;
+color: var(–muted);
+letter-spacing: 0.1em;
+text-transform: uppercase;
+padding: 14px 10px 6px;
+opacity: 0.5;
+}
+
+/* MIDDLE PANEL - Editor */
+.panel-mid {
+border-right: 1px solid var(–border);
+display: flex;
+flex-direction: column;
+}
+
+.panel-header {
+padding: 14px 20px;
+border-bottom: 1px solid var(–border);
+display: flex;
+align-items: center;
+justify-content: space-between;
+}
+
+.panel-header .panel-label { margin: 0; }
+
+.char-count {
+font-family: ‘DM Mono’, monospace;
+font-size: 10px;
+color: var(–muted);
+}
+
+#editor {
+flex: 1;
+background: var(–surface);
+border: none;
+color: var(–text);
+font-family: ‘DM Mono’, monospace;
+font-size: 12px;
+line-height: 1.8;
+padding: 20px;
+resize: none;
+outline: none;
+overflow-y: auto;
+white-space: pre;
+overflow-x: auto;
+}
+
+#editor::selection { background: rgba(200, 240, 96, 0.2); }
+
+/* RIGHT PANEL - Preview */
+.panel-right {
+display: flex;
+flex-direction: column;
+}
+
+.preview-body {
+flex: 1;
+padding: 24px 28px;
+overflow-y: auto;
+}
+
+/* Markdown preview styles */
+.preview-body h1 {
+font-family: ‘Instrument Serif’, serif;
+font-size: 24px;
+color: var(–accent);
+margin-bottom: 16px;
+padding-bottom: 10px;
+border-bottom: 1px solid var(–border);
+font-weight: 400;
+}
+
+.preview-body h2 {
+font-family: ‘DM Mono’, monospace;
+font-size: 11px;
+letter-spacing: 0.1em;
+text-transform: uppercase;
+color: var(–accent);
+margin: 24px 0 10px;
+opacity: 0.8;
+}
+
+.preview-body h3 {
+font-family: ‘DM Sans’, sans-serif;
+font-size: 13px;
+font-weight: 500;
+color: var(–text);
+margin: 16px 0 6px;
+}
+
+.preview-body p {
+color: #bbb;
+font-size: 13px;
+margin-bottom: 10px;
+line-height: 1.7;
+}
+
+.preview-body code {
+font-family: ‘DM Mono’, monospace;
+font-size: 11px;
+background: var(–tag-bg);
+color: var(–accent);
+padding: 1px 5px;
+border-radius: 3px;
+}
+
+.preview-body pre {
+background: var(–tag-bg);
+border: 1px solid var(–border);
+border-radius: 6px;
+padding: 14px 16px;
+margin: 10px 0;
+overflow-x: auto;
+}
+
+.preview-body pre code {
+background: none;
+padding: 0;
+color: #bbb;
+font-size: 11px;
+}
+
+.preview-body ul, .preview-body ol {
+padding-left: 18px;
+margin-bottom: 10px;
+color: #bbb;
+font-size: 13px;
+}
+
+.preview-body li { margin-bottom: 4px; line-height: 1.6; }
+
+.preview-body strong { color: var(–text); font-weight: 500; }
+
+.preview-body hr {
+border: none;
+border-top: 1px solid var(–border);
+margin: 20px 0;
+}
+
+.preview-body blockquote {
+border-left: 2px solid var(–accent);
+padding-left: 12px;
+color: var(–muted);
+font-style: italic;
+margin: 10px 0;
+}
+
+/* Toast */
+.toast {
+position: fixed;
+bottom: 24px;
+left: 50%;
+transform: translateX(-50%) translateY(10px);
+background: var(–accent);
+color: var(–on-accent);
+font-family: ‘DM Mono’, monospace;
+font-size: 12px;
+padding: 10px 20px;
+border-radius: 6px;
+opacity: 0;
+transition: all 0.2s;
+pointer-events: none;
+z-index: 999;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(–border-bright); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(–muted); }
+
+.select-all-row {
+display: flex;
+gap: 6px;
+padding: 0 8px;
+margin-bottom: 10px;
+}
+
+.mini-btn {
+font-family: ‘DM Mono’, monospace;
+font-size: 10px;
+color: var(–muted);
+border: 1px solid var(–border);
+background: none;
+padding: 3px 8px;
+border-radius: 4px;
+cursor: pointer;
+transition: all 0.12s;
+}
+.mini-btn:hover { color: var(–accent); border-color: var(–accent); }
+</style>
+
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-text">CLAUDE.md</span>
+    <span class="logo-sub">generator</span>
+  </div>
+  <div class="header-actions">
+    <button class="btn" onclick="resetEditor()">↺ Reset</button>
+    <button class="btn btn-primary" onclick="copyToClipboard()">Copy CLAUDE.md</button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT: Block selector -->
+
+  <div class="panel-left">
+    <div class="panel-label">Sections</div>
+    <div class="select-all-row">
+      <button class="mini-btn" onclick="selectAll()">all</button>
+      <button class="mini-btn" onclick="selectNone()">none</button>
+    </div>
+    <div id="block-list"></div>
+  </div>
+
+  <!-- MIDDLE: Editor -->
+
+  <div class="panel-mid">
+    <div class="panel-header">
+      <div class="panel-label">Edit</div>
+      <div class="char-count" id="char-count">0 chars</div>
+    </div>
+    <textarea id="editor" spellcheck="false" oninput="syncPreview(); updateCount()"></textarea>
+  </div>
+
+  <!-- RIGHT: Preview -->
+
+  <div class="panel-right">
+    <div class="panel-header">
+      <div class="panel-label">Preview</div>
+    </div>
+    <div class="preview-body" id="preview"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Copied to clipboard!</div>
+
+<script>
+// ─── BLOCK DEFINITIONS ────────────────────────────────────────────────────────
+const BLOCKS = [
+  {
+    id: 'project',
+    group: 'Foundation',
+    name: 'Project Overview',
+    desc: 'What this repo is',
+    default: true,
+    content: `# CLAUDE.md
+
+## Project Overview
+
+[PROJECT_NAME] is a [brief description: what it does, who it's for, and why it exists].
+
+**Primary language**: [Language/Runtime]
+**Purpose**: [production app / library / tool / internal service]
+**Status**: [active development / stable / maintenance mode]
+`
+  },
+  {
+    id: 'tone',
+    group: 'Foundation',
+    name: 'Communication Style',
+    desc: 'Language & tone preferences',
+    default: true,
+    content: `## Communication Style
+
+- **Language**: All responses in [English / your language]
+- **Tone**: Be direct and concise. Avoid unnecessary preamble.
+- **Code comments**: Write them as if explaining to a future maintainer, not a beginner.
+- **When uncertain**: Say so explicitly rather than guessing.
+`
+  },
+  {
+    id: 'behavior',
+    group: 'Foundation',
+    name: 'Core Behaviors',
+    desc: 'What Claude should always/never do',
+    default: true,
+    content: `## Core Behaviors
+
+**Always:**
+- Read existing code before writing new code
+- Prefer editing existing files over creating new ones
+- Keep changes minimal and focused — don't refactor unrelated code
+- Run tests after making changes if a test command is available
+
+**Never:**
+- Add unrequested features or "improvements"
+- Change unrelated files in the same edit
+- Use placeholder comments like \`// TODO: implement this\`
+- Leave debugging code (console.log, print statements) in commits
+`
+  },
+  {
+    id: 'devcommands',
+    group: 'Development',
+    name: 'Dev Commands',
+    desc: 'Build, test, run commands',
+    default: true,
+    content: `## Development Commands
+
+\`\`\`bash
+# Install dependencies
+[install command]
+
+# Start development server
+[dev command]
+
+# Run tests
+[test command]
+
+# Run a single test file
+[single test command]
+
+# Build for production
+[build command]
+
+# Lint / format
+[lint command]
+\`\`\`
+`
+  },
+  {
+    id: 'architecture',
+    group: 'Development',
+    name: 'Architecture',
+    desc: 'Repo structure & key patterns',
+    default: true,
+    content: `## Architecture
+
+### Directory Structure
+
+\`\`\`
+[root]/
+├── [src or app]/       # [description]
+├── [tests]/            # [description]
+├── [config]/           # [description]
+└── [docs]/             # [description]
+\`\`\`
+
+### Key Patterns
+
+- **[Pattern name]**: [Brief explanation of the main architectural pattern used]
+- **[State management]**: [How application state is handled]
+- **[Data layer]**: [How data is fetched / stored / mutated]
+`
+  },
+  {
+    id: 'codestyle',
+    group: 'Development',
+    name: 'Code Style',
+    desc: 'Formatting & naming conventions',
+    default: false,
+    content: `## Code Style
+
+- **Indentation**: [tabs / 2 spaces / 4 spaces]
+- **Quotes**: [single / double]
+- **Semicolons**: [yes / no]
+- **Line length**: [80 / 100 / 120] characters max
+- **File naming**: [kebab-case / camelCase / snake_case]
+- **Component naming**: [PascalCase]
+- **Function naming**: [camelCase / snake_case]
+
+Linting is enforced via [ESLint / Prettier / Ruff / etc.] — always run before committing.
+`
+  },
+  {
+    id: 'testing',
+    group: 'Development',
+    name: 'Testing Philosophy',
+    desc: 'How and when to write tests',
+    default: false,
+    content: `## Testing
+
+### Philosophy
+
+Test behavior, not implementation. Tests should survive internal refactors.
+
+### What to test
+
+- Public API surface of modules
+- Edge cases and error states
+- Integration between major components
+
+### What not to test
+
+- Internal implementation details
+- Third-party libraries
+- One-liners with no logic
+
+### Running tests
+
+\`\`\`bash
+# Full test suite
+[test command]
+
+# Watch mode
+[watch command]
+
+# Coverage
+[coverage command]
+\`\`\`
+`
+  },
+  {
+    id: 'git',
+    group: 'Workflow',
+    name: 'Git & Commits',
+    desc: 'Branching strategy & commit style',
+    default: false,
+    content: `## Git Workflow
+
+### Branch naming
+
+\`\`\`
+feature/[short-description]
+fix/[short-description]
+chore/[short-description]
+\`\`\`
+
+### Commit messages
+
+Follow Conventional Commits:
+
+\`\`\`
+feat: add user authentication
+fix: resolve null pointer in payment flow
+chore: update dependencies
+docs: clarify setup instructions
+\`\`\`
+
+- Subject line: ≤72 chars, imperative mood, no trailing period
+- Never commit directly to \`main\` / \`master\`
+`
+  },
+  {
+    id: 'pr',
+    group: 'Workflow',
+    name: 'Pull Request Guidelines',
+    desc: 'PR scope & review expectations',
+    default: false,
+    content: `## Pull Requests
+
+- Keep PRs small and focused — one concern per PR
+- Write a clear description of *what* and *why*, not just *what*
+- Link to relevant issues
+- All CI checks must pass before merging
+- At least [1 / 2] approval(s) required
+
+When reviewing, Claude should flag:
+- Logic errors or edge cases
+- Missing error handling
+- Security issues
+- Performance concerns in hot paths
+`
+  },
+  {
+    id: 'env',
+    group: 'Configuration',
+    name: 'Environment & Config',
+    desc: 'Env vars & configuration patterns',
+    default: false,
+    content: `## Environment & Configuration
+
+Environment variables are managed via \`.env\` files. Never commit \`.env\` files.
+
+\`\`\`bash
+# Copy the example and fill in values
+cp .env.example .env
+\`\`\`
+
+### Required variables
+
+| Variable | Description |
+|----------|-------------|
+| \`[VAR_NAME]\` | [What it does] |
+| \`[VAR_NAME]\` | [What it does] |
+
+### Environments
+
+- **development**: [brief description]
+- **staging**: [brief description]  
+- **production**: [brief description]
+`
+  },
+  {
+    id: 'security',
+    group: 'Configuration',
+    name: 'Security Rules',
+    desc: 'What to never touch or expose',
+    default: false,
+    content: `## Security
+
+**Never:**
+- Log secrets, tokens, or passwords — not even partially
+- Hardcode credentials or API keys
+- Disable authentication/authorization for convenience
+- Commit \`.env\` files or any file containing real secrets
+
+**Always:**
+- Validate and sanitize user input before processing
+- Use parameterized queries — never string-concatenate SQL
+- Follow principle of least privilege for API permissions
+`
+  },
+  {
+    id: 'donottouch',
+    group: 'Configuration',
+    name: 'Do Not Touch',
+    desc: 'Files/areas Claude should avoid',
+    default: false,
+    content: `## Do Not Modify
+
+The following files/directories should not be modified without explicit instruction:
+
+- \`[file or directory]\` — [reason]
+- \`[file or directory]\` — [reason]
+- \`[file or directory]\` — auto-generated, will be overwritten
+
+Always confirm before making changes to:
+- Database migration files
+- CI/CD pipeline configuration
+- Production secrets or credentials
+`
+  },
+  {
+    id: 'errors',
+    group: 'Patterns',
+    name: 'Error Handling',
+    desc: 'How errors should be handled',
+    default: false,
+    content: `## Error Handling
+
+- Fail fast and explicitly — don't silently swallow errors
+- Use typed errors / custom error classes where the stack supports it
+- Always handle promise rejections — no unhandled \`.catch()\`
+- Log errors with enough context to reproduce the issue
+- User-facing errors should be human-readable; internal errors can be verbose
+
+\`\`\`
+// Pattern: Result type (adapt to your language)
+{ success: true, data: ... }
+{ success: false, error: "description", code: "ERROR_CODE" }
+\`\`\`
+`
+  },
+  {
+    id: 'api',
+    group: 'Patterns',
+    name: 'API Conventions',
+    desc: 'REST / GraphQL / RPC patterns',
+    default: false,
+    content: `## API Conventions
+
+- **Style**: [RESTful / GraphQL / tRPC / RPC]
+- **Versioning**: [/v1/ prefix / header-based / none]
+- **Auth**: [JWT Bearer / API Key / Session]
+- **Error format**:
+
+\`\`\`json
+{
+  "success": false,
+  "error": "Human-readable message",
+  "code": "MACHINE_READABLE_CODE"
+}
+\`\`\`
+
+- All endpoints return consistent response shapes
+- Use HTTP status codes correctly (200, 201, 400, 401, 403, 404, 422, 500)
+`
+  },
+  {
+    id: 'db',
+    group: 'Patterns',
+    name: 'Database Patterns',
+    desc: 'Migrations, queries, models',
+    default: false,
+    content: `## Database
+
+- **Database**: [PostgreSQL / MySQL / SQLite / MongoDB / etc.]
+- **ORM / Query builder**: [name]
+- **Migrations**: [tool name] — always create a migration for schema changes
+
+### Rules
+
+- Never modify existing migration files — create new ones
+- Always backup before running migrations in production
+- Use transactions for multi-step operations
+- Add indexes for fields used in \`WHERE\`, \`JOIN\`, or \`ORDER BY\`
+
+\`\`\`bash
+# Create migration
+[migration create command]
+
+# Run migrations
+[migration run command]
+
+# Rollback
+[migration rollback command]
+\`\`\`
+`
+  },
+  {
+    id: 'troubleshoot',
+    group: 'Reference',
+    name: 'Troubleshooting',
+    desc: 'Common issues & fixes',
+    default: false,
+    content: `## Troubleshooting
+
+### [Common issue #1]
+
+**Symptom**: [What the developer sees]
+**Cause**: [Why it happens]
+**Fix**:
+\`\`\`bash
+[fix command]
+\`\`\`
+
+### [Common issue #2]
+
+**Symptom**: [What the developer sees]
+**Fix**: [Description or command]
+
+### When all else fails
+
+\`\`\`bash
+# Nuclear reset
+[reset command]
+\`\`\`
+`
+  },
+  {
+    id: 'glossary',
+    group: 'Reference',
+    name: 'Glossary',
+    desc: 'Project-specific terms',
+    default: false,
+    content: `## Glossary
+
+| Term | Meaning |
+|------|---------|
+| **[Term]** | [Definition as used in this project] |
+| **[Term]** | [Definition] |
+| **[Term]** | [Definition] |
+
+> These terms have specific meanings in this codebase that may differ from general usage.
+`
+  },
+  {
+    id: 'agents',
+    group: 'Advanced',
+    name: 'Multi-Agent / Subagents',
+    desc: 'For agentic Claude Code workflows',
+    default: false,
+    content: `## Multi-Agent Workflow
+
+This project uses Claude Code in agentic mode. The following agent roles are defined:
+
+| Agent | Responsibility |
+|-------|----------------|
+| **Orchestrator** | Breaks tasks into subtasks, delegates, synthesizes results |
+| **[Agent role]** | [Specific domain responsibility] |
+| **[Agent role]** | [Specific domain responsibility] |
+
+### Coordination rules
+
+- Agents communicate through [shared files / message queue / memory store]
+- No agent should modify files outside its domain without orchestrator approval
+- Conflicts are resolved by [orchestrator / human review]
+`
+  },
+  {
+    id: 'memory',
+    group: 'Advanced',
+    name: 'Memory & Context',
+    desc: 'Persistent context across sessions',
+    default: false,
+    content: `## Memory & Context
+
+Use \`CLAUDE.md\` sub-files in major directories to provide local context:
+
+\`\`\`
+src/
+├── CLAUDE.md         ← Component-level guidance
+api/
+├── CLAUDE.md         ← API-specific rules
+\`\`\`
+
+### What to persist between sessions
+
+- Decisions made about architecture
+- Known gotchas and workarounds
+- Ongoing work and next steps (use \`NOTES.md\` for in-progress state)
+`
+  },
+];
+
+// ─── STATE ─────────────────────────────────────────────────────────────────────
+let activeBlocks = new Set(BLOCKS.filter(b => b.default).map(b => b.id));
+
+// ─── INIT ──────────────────────────────────────────────────────────────────────
+function init() {
+  renderBlockList();
+  rebuildEditor();
+  syncPreview();
+  updateCount();
+}
+
+function renderBlockList() {
+  const container = document.getElementById('block-list');
+  container.innerHTML = '';
+  let currentGroup = null;
+
+  BLOCKS.forEach(block => {
+    if (block.group !== currentGroup) {
+      currentGroup = block.group;
+      const div = document.createElement('div');
+      div.className = 'section-divider';
+      div.textContent = block.group;
+      container.appendChild(div);
+    }
+
+    const item = document.createElement('div');
+    item.className = 'block-item' + (activeBlocks.has(block.id) ? ' active' : '');
+    item.dataset.id = block.id;
+    item.onclick = () => toggleBlock(block.id);
+    item.innerHTML = `
+      <div class="block-toggle">
+        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+          <path d="M1 4L3.5 6.5L9 1" stroke="#0e0e0e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="block-info">
+        <div class="block-name">${block.name}</div>
+        <div class="block-desc">${block.desc}</div>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+}
+
+function toggleBlock(id) {
+  if (activeBlocks.has(id)) {
+    activeBlocks.delete(id);
+  } else {
+    activeBlocks.add(id);
+  }
+  renderBlockList();
+  rebuildEditor();
+  syncPreview();
+  updateCount();
+}
+
+function rebuildEditor() {
+  const orderedActive = BLOCKS.filter(b => activeBlocks.has(b.id));
+  const text = orderedActive.map(b => b.content.trim()).join('\n\n---\n\n');
+  document.getElementById('editor').value = text;
+}
+
+function selectAll() {
+  BLOCKS.forEach(b => activeBlocks.add(b.id));
+  renderBlockList();
+  rebuildEditor();
+  syncPreview();
+  updateCount();
+}
+
+function selectNone() {
+  activeBlocks.clear();
+  renderBlockList();
+  rebuildEditor();
+  syncPreview();
+  updateCount();
+}
+
+// ─── PREVIEW ───────────────────────────────────────────────────────────────────
+function syncPreview() {
+  const raw = document.getElementById('editor').value;
+  document.getElementById('preview').innerHTML = markdownToHtml(raw);
+}
+
+function markdownToHtml(md) {
+  let html = md
+    // Escape HTML
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    // Code blocks
+    .replace(/```[\w]*\n?([\s\S]*?)```/g, (_, code) =>
+      `<pre><code>${code.trim()}</code></pre>`)
+
+```
+// Inline code
+.replace(/`([^`]+)`/g, '<code>$1</code>')
+// HR
+.replace(/^---$/gm, '<hr>')
+// H1
+.replace(/^# (.+)$/gm, '<h1>$1</h1>')
+// H2
+.replace(/^## (.+)$/gm, '<h2>$1</h2>')
+// H3
+.replace(/^### (.+)$/gm, '<h3>$1</h3>')
+// Bold
+.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+// Italic
+.replace(/\*(.+?)\*/g, '<em>$1</em>')
+// Blockquote
+.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+// Table rows (header)
+.replace(/^\|(.+)\|\n\|[-| :]+\|\n((?:\|.+\|\n?)*)/gm, (_, header, rows) => {
+  const ths = header.split('|').filter(s => s.trim()).map(s => `<th>${s.trim()}</th>`).join('');
+  const trs = rows.trim().split('\n').map(row => {
+    const tds = row.split('|').filter(s => s.trim()).map(s => `<td>${s.trim()}</td>`).join('');
+    return `<tr>${tds}</tr>`;
+  }).join('');
+  return `<table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>`;
+})
+// Unordered list items
+.replace(/^[-*] (.+)$/gm, '<li>$1</li>')
+// Wrap consecutive <li> in <ul>
+.replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`)
+// Ordered list
+.replace(/^\d+\. (.+)$/gm, '<oli>$1</oli>')
+.replace(/(<oli>.*<\/oli>\n?)+/g, m => `<ol>${m.replace(/<\/?oli>/g, s => s.replace('oli','li'))}</ol>`)
+// Paragraphs (double newline)
+.replace(/\n\n(?!<)/g, '</p><p>')
+// Clean up
+.replace(/\n/g, '<br>');
+```
+
+// Wrap in paragraph if not starting with a block element
+if (!html.startsWith(’<’)) html = ‘<p>’ + html + ‘</p>’;
+return html;
+}
+
+// ─── UTILS ─────────────────────────────────────────────────────────────────────
+function updateCount() {
+const len = document.getElementById(‘editor’).value.length;
+document.getElementById(‘char-count’).textContent = len.toLocaleString() + ’ chars’;
+}
+
+function resetEditor() {
+activeBlocks = new Set(BLOCKS.filter(b => b.default).map(b => b.id));
+renderBlockList();
+rebuildEditor();
+syncPreview();
+updateCount();
+}
+
+function copyToClipboard() {
+const text = document.getElementById(‘editor’).value;
+navigator.clipboard.writeText(text).then(() => {
+const toast = document.getElementById(‘toast’);
+toast.classList.add(‘show’);
+setTimeout(() => toast.classList.remove(‘show’), 2000);
+});
+}
+
+// ─── START ─────────────────────────────────────────────────────────────────────
+init();
+</script>
+
+</body>
+</html>

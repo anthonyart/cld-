@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CLAUDE.md Generator</title>
+<title>cldmdgen</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -380,8 +380,7 @@
 
 <header>
   <div class="logo">
-    <span class="logo-text">CLAUDE.md</span>
-    <span class="logo-sub">generator</span>
+    <span class="logo-text">cldmdgen</span>
   </div>
   <div class="header-actions">
     <button class="btn" onclick="resetEditor()">&#x21BA; Reset</button>
@@ -1012,11 +1011,27 @@ function resetEditor() {
 
 function copyToClipboard() {
   const text = document.getElementById('editor').value;
-  navigator.clipboard.writeText(text).then(() => {
+  const show = () => {
     const toast = document.getElementById('toast');
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 2000);
-  });
+  };
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(show).catch(() => fallbackCopy(text, show));
+  } else {
+    fallbackCopy(text, show);
+  }
+}
+
+function fallbackCopy(text, cb) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;opacity:0';
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+  cb();
 }
 
 // ── START ──────────────────────────────────────────────────────────────────────

@@ -1,0 +1,33 @@
+# systemd unit template for the example app.
+#
+# Install once per server:
+#   sudo cp deploy/myapp.service /etc/systemd/system/myapp.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now myapp
+#
+# Edit User/WorkingDirectory/ExecStart below if you renamed the app, the deploy user, or the
+# path — they must match REMOTE_PATH and SERVICE_NAME used by scripts/deploy.sh.
+
+[Unit]
+Description=Claude Code starter app
+After=network.target
+
+[Service]
+Type=simple
+User=deploy
+WorkingDirectory=/opt/claude-code-starter-app
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=5
+Environment=NODE_ENV=production
+Environment=PORT=3000
+# EnvironmentFile=/opt/claude-code-starter-app/.env
+
+# Basic hardening — safe defaults for a simple static/API server.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/opt/claude-code-starter-app
+
+[Install]
+WantedBy=multi-user.target

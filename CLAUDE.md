@@ -2,65 +2,64 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with this repository.
 
-> **This is a starter-kit template.** The sections below show realistic *example* content so you can
-> see what a good `CLAUDE.md` looks like, not blank placeholders. Replace every example with the real
-> details of your project, then delete anything that doesn't apply. See `README.md` for the
-> full ✅/❌ guide on what belongs here versus what to leave out.
+> **This is a starter-kit template.** It ships with one small, real example app (`app/`) so the
+> whole journey — build, test, deploy over SSH — actually works out of the box instead of being
+> described in the abstract. When you fork this for your own project, delete `app/` and replace
+> everything below with the real details of *your* project. See `README.md` for the full ✅/❌
+> guide on what belongs here versus what to leave out.
 
 ## Project Overview
 
-Example: a Node/TypeScript REST API that manages user accounts and billing, deployed as a
-single service behind an API gateway. (Replace with a 2-3 sentence description of what your
-project does and who uses it.)
+The example app in this kit: a single-page HTML app (`app/public/index.html`) served by a
+dependency-free Node `http` server (`app/server.js`). It exists to give the deploy guide
+(`docs/deploying.md`) something real to ship over SSH — it's intentionally trivial, not a
+template for how *your* app should be architected.
 
 ## Development Commands
 
 ```bash
-# Install dependencies
-npm install
+# Run the app locally
+cd app && npm start        # or: node app/server.js
+# then open http://localhost:3000
 
-# Run development server
-npm run dev
+# Run tests (Node's built-in test runner — no test framework dependency)
+cd app && npm test
 
-# Run a single test file (prefer this over the full suite while iterating)
-npm test -- path/to/file.test.ts
-
-# Run the full test suite
-npm test
-
-# Build for production
-npm run build
-
-# Lint / format
-npm run lint
+# Deploy to a server over SSH (one-time server setup: see docs/deploying.md)
+REMOTE_HOST=example.com REMOTE_USER=deploy ./scripts/deploy.sh
 ```
 
 ## Code Style & Conventions
 
-- Use ES modules (`import`/`export`), not CommonJS (`require`)
-- Destructure imports when possible (e.g. `import { foo } from 'bar'`)
-- Errors are thrown as typed `AppError` subclasses, not raw strings — see `src/errors.ts`
-- New endpoints go through the existing `src/routes/*` pattern; don't add a second routing layer
+- The example app deliberately has zero npm dependencies — built-in `node:http`/`node:fs` only —
+  so a fresh fork works without `npm install`. Don't add dependencies to `app/` without a reason.
+- The frontend is one static HTML file with inline CSS/JS: no build step, no framework, so it
+  still renders even if the Node server behind it isn't running (see the fallback status text in
+  `app/public/index.html`).
 
 ## Key Files & Directories
 
 ```
-src/routes/       # HTTP route handlers, one file per resource
-src/services/     # Business logic, called from routes
-src/db/           # Database schema and migrations
+app/server.js              # Dependency-free Node http server: serves app/public/, exposes /api/health
+app/public/index.html      # Static SPA — renders standalone even without the Node server running
+app/server.test.js         # node:test suite for server.js
+scripts/deploy.sh          # rsync app/ to a server over SSH, restart the systemd service
+deploy/myapp.service       # systemd unit template — copy to the server, edit paths/user
+deploy/nginx.conf.example  # optional reverse proxy config (:80/:443 -> node on :3000)
+docs/deploying.md          # full SSH deployment guide: one-time server setup through rollback
+.claude/skills/            # changelog-entry example skill
 ```
 
 ## Environment Variables
 
 ```
-DATABASE_URL=       # Postgres connection string, see .env.example
-ANTHROPIC_API_KEY=  # Only needed if running the AI-powered import feature locally
+PORT=3000   # port the Node server listens on, both locally and in deploy/myapp.service
 ```
 
 ## Testing
 
-Tests live next to the code they cover (`foo.ts` / `foo.test.ts`). Run a single test file while
-iterating; only run the full suite before committing.
+`app/server.test.js` uses Node's built-in test runner (`node --test`) — no test framework
+dependency to install. Run it with `cd app && npm test`.
 
 ## Repo Etiquette
 
@@ -74,6 +73,8 @@ iterating; only run the full suite before committing.
 - Prefer editing existing files over creating new ones
 - Do not commit unless explicitly asked
 - Ask before taking destructive or irreversible actions
+- `scripts/deploy.sh` touches a real server — it's a manual, human-run step by design; never run
+  it unprompted
 - For domain knowledge or workflows that only come up sometimes, add a skill under
   `.claude/skills/` instead of growing this file — see `.claude/skills/changelog-entry/SKILL.md`
   for an example, and `README.md` for how to pull in Anthropic's published skills

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code Starter Kit</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    max-width: 640px;
+    margin: 4rem auto;
+    padding: 0 1.5rem;
+    line-height: 1.6;
+  }
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .5rem 1rem;
+    border-radius: 999px;
+    font-size: .9rem;
+    background: rgba(127, 127, 127, .15);
+  }
+  .dot { width: .6rem; height: .6rem; border-radius: 50%; background: gray; flex: none; }
+  .dot.ok { background: #2ea043; }
+  .dot.down { background: #d1242f; }
+  code { background: rgba(127, 127, 127, .15); padding: .1rem .35rem; border-radius: 4px; }
+</style>
+</head>
+<body>
+  <h1>It works.</h1>
+  <p>This page is <code>app/public/index.html</code> from the Claude Code starter kit, served as a
+  static file — with or without the Node server behind it.</p>
+  <p class="status"><span class="dot" id="dot"></span><span id="statusText">Checking server&hellip;</span></p>
+  <p>If the status stays gray, you're viewing the static file directly (e.g. via nginx with no
+  backend, or opened from disk) — that's expected and by design, not an error.</p>
+  <script>
+    fetch('/api/health')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('bad response'))))
+      .then((data) => {
+        document.getElementById('dot').className = 'dot ok';
+        document.getElementById('statusText').textContent =
+          `Node server responding (up ${data.uptimeSeconds}s)`;
+      })
+      .catch(() => {
+        document.getElementById('dot').className = 'dot down';
+        document.getElementById('statusText').textContent = 'Static preview only — server API not reachable';
+      });
+  </script>
+</body>
+</html>

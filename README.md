@@ -1,9 +1,9 @@
 # Claude Code Starter Kit
 
-A minimal template for getting a new project set up well with [Claude Code](https://claude.com/claude-code):
-a best-practices `CLAUDE.md`, one example skill, and pointers to Anthropic's published skills so you
-get useful capabilities working on day one. This kit isn't tied to any particular language or
-framework — it's meant to be forked into a fresh project.
+A starter kit that walks you all the way from a fresh Claude Code install to a real deploy: a
+best-practices `CLAUDE.md`, one example skill, pointers to Anthropic's published skills, a tiny
+dependency-free example app, and an SSH deploy flow (`docs/deploying.md`) to put it on a server.
+Fork it, swap the example app for your real project, and keep the guide/scripts as it grows.
 
 ## Getting started / verify your setup
 
@@ -50,13 +50,22 @@ your first real read of this repo's `CLAUDE.md`.
 
 ## Using this template
 
+Try it as-is first: run the example app locally (`cd app && npm start`, then open
+http://localhost:3000) and skim `docs/deploying.md` — see the whole loop working before you
+change anything.
+
+Then make it yours:
+
 1. Clone/fork this repo (or copy `CLAUDE.md` and `.claude/` into an existing project).
-2. Open the project in Claude Code and run `/init` if you want Claude to scan your actual codebase
+2. Delete `app/` once you have your own codebase — it's a stand-in, not a dependency.
+3. Open the project in Claude Code and run `/init` if you want Claude to scan your actual codebase
    and draft a starting point — then replace the example content in `CLAUDE.md` with whatever
    `/init` finds (or with your own knowledge of the project). Don't just keep `/init`'s raw output;
    treat it as a first draft.
-3. Prune ruthlessly. For every line, ask: *"would removing this cause Claude to make mistakes?"*
+4. Prune ruthlessly. For every line, ask: *"would removing this cause Claude to make mistakes?"*
    If not, cut it.
+5. Adapt `scripts/deploy.sh` and `deploy/myapp.service` to your app's entry point, paths, and
+   service name — the deploy mechanics (rsync + systemd) stay the same even after the app changes.
 
 ### What belongs in CLAUDE.md
 
@@ -112,6 +121,25 @@ plugin marketplace:
 The four document skills (`docx`/`pdf`/`pptx`/`xlsx`) are source-available reference
 implementations of what powers Claude's built-in document capabilities, not open source — install
 them rather than copying their code.
+
+## Deploying via SSH
+
+This kit teaches one concrete, boring-on-purpose deploy path: `rsync` the app to a server, run it
+under `systemd`. No Docker, no orchestration, no build pipeline required to get started.
+
+```bash
+# One-time on the server — full walkthrough in docs/deploying.md:
+#   - create a deploy user, install Node >=18
+#   - copy deploy/myapp.service to /etc/systemd/system/, edit paths, `systemctl enable`
+#   - (optional) copy deploy/nginx.conf.example for a :80/:443 reverse proxy + TLS
+
+# Every deploy after that:
+REMOTE_HOST=example.com REMOTE_USER=deploy ./scripts/deploy.sh
+```
+
+`scripts/deploy.sh` is a manual, human-run script by design — Claude Code won't run it unless you
+explicitly ask, since it touches a real server. See `docs/deploying.md` for the full guide,
+including firewall/security notes and what to do when a deploy fails.
 
 ## Beyond this kit
 
